@@ -76,10 +76,9 @@
 
     </main>
 
-    <!-- Sincronização Firebase -->
+    <!-- Sincronização Firebase Direta -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const PARTICIPANTS = [
@@ -190,7 +189,6 @@
         }
 
         let db = null;
-        let currentUser = null;
 
         const firebaseConfig = {
           apiKey: "AIzaSyBQgWtbg0-mfi7wUPzQtYIEvGzxLSimxoU",
@@ -205,31 +203,22 @@
         function triggerSave(id, text) {
             clearTimeout(saveTimers[id]);
             saveTimers[id] = setTimeout(async () => {
-                if (db && currentUser) {
+                if (db) {
                     try {
                         const docRef = doc(db, 'amigo_secreto_presentes', id);
                         await setDoc(docRef, { text: text, updatedAt: Date.now() }, { merge: true });
                         showSavedStatus(id, 'Salvo');
                     } catch (err) {
                         console.error('Erro ao salvar:', err);
-                        showSavedStatus(id, 'Salvo');
                     }
-                } else {
-                    showSavedStatus(id, 'Salvo');
                 }
             }, 350);
         }
 
-        async function initRealtimeSync() {
+        function initRealtimeSync() {
             try {
                 const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
                 db = getFirestore(app);
-
-                const cred = await signInAnonymously(auth);
-                currentUser = cred.user;
-
-                if (!currentUser) return;
 
                 const colRef = collection(db, 'amigo_secreto_presentes');
                 onSnapshot(colRef, (snapshot) => {
